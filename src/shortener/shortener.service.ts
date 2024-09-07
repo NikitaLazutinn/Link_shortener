@@ -1,15 +1,18 @@
-import {Injectable} from '@nestjs/common';
+import {Injectable, Inject, CACHE_MANAGER} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Links } from './schemas/Links.schema';
 import { createDto } from './dto/Create.dto';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class ShortenerService {
-    constructor(@InjectModel(Links.name) private linkModel: Model<Links>){}
+    constructor(@InjectModel(Links.name) private linkModel: Model<Links>,
+    @Inject(CACHE_MANAGER) private readonly redis: Cache){}
     
     async create(createDto:createDto){
         const num = await this.findNum();
+        await this.redis.set(num.toString(), createDto.Original, { ttl: 60 });
         createDto['num'] = num;
         const newUser = new this.linkModel(createDto);
 
@@ -39,10 +42,18 @@ export class ShortenerService {
     }
 }
 
-    async findLink(num:number){
-        const document = await this.linkModel.findOne({ num: num });
-        const link = document.Original;
+    async findLink(num:number){      
+        const link = await this.redis.get(num.toString());
+
+        if(link){
         return link;
+        
+        }else{
+            const document = await this.linkModel.findOne({ num: num });
+            const link = document.Original;
+            return link;
+        }
+        
     }
 
 
