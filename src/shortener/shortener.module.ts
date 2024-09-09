@@ -26,8 +26,8 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
     ]),
 
     ThrottlerModule.forRoot([{
-      ttl: 10000,
-      limit: 1,
+      ttl: 60000,
+      limit: 10,
     }])],
 
   controllers: [ShortenerController],

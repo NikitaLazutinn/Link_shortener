@@ -11,31 +11,43 @@ export class ShortenerService {
     @Inject(CACHE_MANAGER) private readonly redis: Cache){}
     
     async create(createDto:createDto){
-        const num = await this.findNum();
-        await this.redis.set(num.toString(), createDto.Original, 1);
-        createDto['num'] = num;
-        createDto['usageTimes'] = 0;
-        const newUser = new this.linkModel(createDto);
+        const reply = "Your shortened link is: http://localhost:3000/shortener/";
+        const exist = await this.linkModel.findOne({ Original: createDto.Original });
 
-        newUser.save();
+        if(exist){
+            const link = await this.redis.get(exist.num.toString());
+            if(!link){
+                await this.redis.set(exist.num.toString(), createDto.Original, 60000);
+            }
 
-        return `Your shortened link is: http://localhost:3000/shortener/num:${num}`
-           
+            return `${reply}${exist.num}`;
+
+        }else{
+            const num = await this.findNum();
+            await this.redis.set(num.toString(), createDto.Original, 60000);
+            createDto['num'] = num;
+            createDto['usageTimes'] = 0;
+            const newUser = new this.linkModel(createDto);
+    
+            newUser.save();
+    
+            return `${reply}${num}`;
+        }
+         
     }
 
-    async getByNum(num:number) {
+    async findLinkByNum(num:number) {
         try {
             const user = await this.linkModel.findOne({ num: num });
             return user;
         } catch (error) {
-            console.error("Error fetching user:", error);
-            throw error; 
+            throw error;
         }
     }
 
     async findNum(){
         for(let i = 0;true; i++){
-            const currentDoc = await this.getByNum(i);
+            const currentDoc = await this.findLinkByNum(i);
             if(!currentDoc){
                 return i;
             }
