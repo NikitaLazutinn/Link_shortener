@@ -10,6 +10,9 @@ export class Links{
 
     @Prop()
     Shortened: string;
+
+    @Prop()
+    usageTimes: number;
 }
 
 export const LinksSchema = SchemaFactory.createForClass(Links);

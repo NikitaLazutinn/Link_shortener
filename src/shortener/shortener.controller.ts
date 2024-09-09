@@ -17,13 +17,13 @@ export class ShortenerController {
   @Get(':num')
   @Redirect()
   async redirect(@Param('num') num: number) {
-    const link = await this.shortenerService.findLink(num);
+    const link = await this.shortenerService.GetLink(num);
     return { url: link };
   }
 
-  // @Get(':num')
-  // async O(@Param('num') num: number){
-  //   const link = await this.shortenerService.findLink(num);
-  //   return link;
-  // }
+  @Get('/stats/:num')
+  async stats(@Param('num') num: number) {
+    const stats = await this.shortenerService.getStatistic(num);
+    return stats;
+  }
 }
